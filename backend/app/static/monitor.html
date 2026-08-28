@@ -1,0 +1,965 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTE Production Monitor</title>
+  <style>
+    :root {
+      --green-950: #0f2f23;
+      --green-900: #153f2e;
+      --green-800: #1c543c;
+      --green-700: #26704f;
+      --green-600: #328c64;
+      --green-100: #e8f4ed;
+      --green-50: #f3faf6;
+      --amber-700: #a15c00;
+      --amber-100: #fff2d5;
+      --red-700: #a12b2b;
+      --red-100: #ffe4e4;
+      --blue-700: #245b9e;
+      --blue-100: #e5efff;
+      --ink: #17231d;
+      --muted: #617168;
+      --line: #d8e4dc;
+      --surface: #ffffff;
+      --background: #f4f7f5;
+      --shadow: 0 10px 30px rgba(15, 47, 35, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    button,
+    select,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .topbar {
+      background:
+        radial-gradient(circle at 90% -20%, rgba(255,255,255,.18), transparent 36%),
+        linear-gradient(135deg, var(--green-950), var(--green-700));
+      color: white;
+      padding: 24px clamp(18px, 4vw, 52px);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar-inner {
+      max-width: 1500px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      background: rgba(255,255,255,.1);
+      letter-spacing: .5px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: rgba(255,255,255,.8);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      color: white;
+      background: var(--green-700);
+    }
+
+    .btn-light {
+      color: var(--green-950);
+      background: white;
+    }
+
+    .btn-outline {
+      color: var(--green-800);
+      background: transparent;
+      border: 1px solid var(--green-600);
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 26px auto 60px;
+      padding: 0 clamp(14px, 3vw, 36px);
+    }
+
+    .alert {
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      border: 1px solid transparent;
+      font-weight: 600;
+    }
+
+    .alert-warning {
+      background: var(--amber-100);
+      border-color: #f2d18d;
+      color: #754400;
+    }
+
+    .alert-error {
+      background: var(--red-100);
+      border-color: #efb5b5;
+      color: var(--red-700);
+    }
+
+    .alert-success {
+      background: var(--green-100);
+      border-color: #b7d8c4;
+      color: var(--green-900);
+    }
+
+    .status-grid,
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .status-card,
+    .metric-card {
+      padding: 18px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      color: var(--green-950);
+      font-size: 26px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .value.small {
+      font-size: 18px;
+    }
+
+    .section {
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 18px;
+      color: var(--green-950);
+    }
+
+    .section-body {
+      padding: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--green-900);
+      padding: 9px 13px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: var(--green-800);
+      border-color: var(--green-800);
+      color: white;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    select,
+    input,
+    textarea {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+      padding: 10px 12px;
+    }
+
+    select {
+      min-width: 270px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--blue-100);
+      color: var(--blue-700);
+    }
+
+    .badge-green {
+      background: var(--green-100);
+      color: var(--green-900);
+    }
+
+    .badge-amber {
+      background: var(--amber-100);
+      color: var(--amber-700);
+    }
+
+    .badge-red {
+      background: var(--red-100);
+      color: var(--red-700);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf2ee;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--green-50);
+      color: var(--green-900);
+      font-size: 12px;
+      z-index: 1;
+    }
+
+    tbody tr:hover {
+      background: #f8fbf9;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code {
+      background: #101b16;
+      color: #dff8e8;
+      border-radius: 12px;
+      padding: 14px;
+      overflow: auto;
+      max-height: 520px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      white-space: pre;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 35px 15px;
+      color: var(--muted);
+    }
+
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .chat-answer {
+      margin-top: 14px;
+      min-height: 90px;
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--green-50);
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+
+    .pager {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .loading {
+      opacity: .65;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">TTE</div>
+        <div>
+          <h1>Production Data Monitor</h1>
+          <div class="subtitle">
+            Estate-wise monthly upload, validation, parsing and controlled reporting
+          </div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span id="lastRefresh" class="subtitle">Not refreshed</span>
+        <button class="btn btn-light" onclick="refreshAll()">Refresh</button>
+        <button class="btn btn-light" onclick="window.open('/docs','_blank')">API Docs</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="pageAlert" class="alert alert-warning">
+      Production metrics remain pending approval. This monitor shows parsed source data for review.
+    </div>
+
+    <section class="status-grid">
+      <div class="card status-card">
+        <div class="label">Data mode</div>
+        <div id="dataMode" class="value small">Loading...</div>
+      </div>
+      <div class="card status-card">
+        <div class="label">Dummy data</div>
+        <div id="dummyState" class="value small">Loading...</div>
+      </div>
+      <div class="card status-card">
+        <div class="label">Analytics state</div>
+        <div id="analyticsState" class="value small">Loading...</div>
+      </div>
+      <div class="card status-card">
+        <div class="label">Approved sources</div>
+        <div id="approvedCount" class="value">0</div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="section-header">
+        <h2 class="section-title">Selected production batch</h2>
+        <div class="control-row">
+          <select id="batchSelect" onchange="loadSelectedBatch()"></select>
+          <span id="batchStatus" class="badge badge-amber">No batch</span>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="tabs">
+          <button class="tab active" data-tab="overview">Overview</button>
+          <button class="tab" data-tab="divisions">Division details</button>
+          <button class="tab" data-tab="financial">COP & break-even</button>
+          <button class="tab" data-tab="files">Source files</button>
+          <button class="tab" data-tab="database">Database explorer</button>
+          <button class="tab" data-tab="json">Raw preview JSON</button>
+          <button class="tab" data-tab="chat">Chat test</button>
+        </div>
+
+        <div id="overview" class="tab-panel active">
+          <div id="batchMeta" class="metric-grid"></div>
+
+          <h3>Parsed record counts</h3>
+          <div id="recordCounts" class="metric-grid"></div>
+
+          <h3>Key totals pending confirmation</h3>
+          <div id="keyTotals" class="metric-grid"></div>
+
+          <div id="reconciliation"></div>
+          <div id="issues"></div>
+        </div>
+
+        <div id="divisions" class="tab-panel">
+          <h3>G Report by division</h3>
+          <div id="gReportTable"></div>
+
+          <h3>Plucking plan by division</h3>
+          <div id="pluckingTable"></div>
+
+          <h3>Made tea crop by division</h3>
+          <div id="madeTeaTable"></div>
+        </div>
+
+        <div id="financial" class="tab-panel">
+          <div class="two-col">
+            <div>
+              <h3>COP total</h3>
+              <div id="copBlock"></div>
+            </div>
+            <div>
+              <h3>Break-even metrics</h3>
+              <div id="breakEvenTable"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="files" class="tab-panel">
+          <div id="sourceFiles"></div>
+        </div>
+
+        <div id="database" class="tab-panel">
+          <div class="control-row">
+            <select id="tableSelect" onchange="loadTable(0)"></select>
+            <select id="pageSize" onchange="loadTable(0)">
+              <option value="25">25 rows</option>
+              <option value="50">50 rows</option>
+              <option value="100" selected>100 rows</option>
+              <option value="250">250 rows</option>
+              <option value="500">500 rows</option>
+            </select>
+          </div>
+          <div id="tableMeta" class="muted" style="margin:12px 0"></div>
+          <div id="databaseTable"></div>
+          <div class="pager">
+            <button class="btn btn-outline" id="prevButton" onclick="changePage(-1)">Previous</button>
+            <span id="pageInfo" class="muted">Page 1</span>
+            <button class="btn btn-outline" id="nextButton" onclick="changePage(1)">Next</button>
+          </div>
+        </div>
+
+        <div id="json" class="tab-panel">
+          <pre id="rawJson" class="code">No preview selected.</pre>
+        </div>
+
+        <div id="chat" class="tab-panel">
+          <div class="chat-layout">
+            <textarea id="chatQuestion" rows="3"
+              placeholder="Example: Give me the Bearwell performance summary."></textarea>
+            <button class="btn btn-primary" onclick="askChat()">Ask</button>
+          </div>
+          <div id="chatAnswer" class="chat-answer">
+            Production reporting remains gated until parsed metrics are approved.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let previews = [];
+    let currentBatch = null;
+    let currentPreviewPayload = null;
+    let tables = [];
+    let tableOffset = 0;
+    let tableTotal = 0;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function titleCase(value) {
+      return String(value ?? "")
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function formatNumber(value, decimals = null) {
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return value ?? "-";
+      }
+
+      if (decimals === null) {
+        return number.toLocaleString();
+      }
+
+      return number.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function metricCard(label, value, note = "") {
+      return `
+        <div class="card metric-card">
+          <div class="label">${escapeHtml(label)}</div>
+          <div class="value small">${escapeHtml(value)}</div>
+          ${note ? `<div class="muted" style="margin-top:7px">${escapeHtml(note)}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderTable(rows) {
+      if (!rows || rows.length === 0) {
+        return `<div class="empty">No rows available.</div>`;
+      }
+
+      const columns = Object.keys(rows[0]);
+
+      return `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>${columns.map(column => `<th>${escapeHtml(titleCase(column))}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  ${columns.map(column => `<td>${escapeHtml(row[column])}</td>`).join("")}
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function setLoading(state) {
+      document.body.classList.toggle("loading", state);
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+
+      let payload;
+
+      try {
+        payload = text ? JSON.parse(text) : {};
+      } catch {
+        payload = { detail: text };
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.detail || `Request failed: ${response.status}`);
+      }
+
+      return payload;
+    }
+
+    async function loadStatus() {
+      const status = await fetchJson("/api/uploads/status");
+
+      document.getElementById("dataMode").textContent =
+        status.data_mode || "Unknown";
+
+      document.getElementById("dummyState").textContent =
+        status.dummy_data_enabled ? "Enabled" : "Disabled";
+
+      document.getElementById("analyticsState").textContent =
+        status.analytics_state || "Unknown";
+
+      document.getElementById("approvedCount").textContent =
+        (status.approved_sources || []).length;
+
+      return status;
+    }
+
+    async function loadPreviews() {
+      previews = await fetchJson("/api/monitor/previews");
+
+      const select = document.getElementById("batchSelect");
+
+      if (!previews.length) {
+        select.innerHTML = `<option value="">No parsed batches</option>`;
+        currentBatch = null;
+        return;
+      }
+
+      select.innerHTML = previews.map(item => `
+        <option value="${escapeHtml(item.batch_id)}">
+          ${escapeHtml(item.estate_name || "Unknown estate")}
+          -
+          ${escapeHtml(item.reporting_month || "Unknown month")}
+          -
+          ${escapeHtml(item.analytics_status || "Unknown status")}
+        </option>
+      `).join("");
+
+      if (!currentBatch || !previews.some(item => item.batch_id === currentBatch)) {
+        currentBatch = previews[0].batch_id;
+      }
+
+      select.value = currentBatch;
+      await loadSelectedBatch();
+    }
+
+    async function loadSelectedBatch() {
+      const select = document.getElementById("batchSelect");
+      currentBatch = select.value;
+
+      if (!currentBatch) {
+        return;
+      }
+
+      currentPreviewPayload = await fetchJson(
+        `/api/monitor/previews/${encodeURIComponent(currentBatch)}`
+      );
+
+      const preview = currentPreviewPayload.preview || {};
+
+      document.getElementById("batchStatus").textContent =
+        preview.analytics_status || "Unknown";
+
+      document.getElementById("batchStatus").className =
+        preview.analytics_status === "PARSED_PENDING_APPROVAL"
+          ? "badge badge-amber"
+          : "badge badge-green";
+
+      renderOverview(preview);
+      renderDivisions(preview);
+      renderFinancial(preview);
+      renderFiles(currentPreviewPayload.source_files || []);
+      document.getElementById("rawJson").textContent =
+        JSON.stringify(currentPreviewPayload, null, 2);
+    }
+
+    function renderOverview(preview) {
+      document.getElementById("batchMeta").innerHTML = [
+        metricCard("Estate", preview.estate_name || "-"),
+        metricCard("Reporting month", preview.reporting_month || "-"),
+        metricCard("Batch ID", preview.batch_id || "-", "Traceable upload ID"),
+        metricCard("Parser version", preview.parser_version || "-")
+      ].join("");
+
+      const counts = preview.record_counts || {};
+
+      document.getElementById("recordCounts").innerHTML =
+        Object.entries(counts)
+          .map(([key, value]) => metricCard(titleCase(key), formatNumber(value)))
+          .join("");
+
+      const totals = preview.key_totals_pending_confirmation || {};
+
+      document.getElementById("keyTotals").innerHTML =
+        Object.entries(totals)
+          .map(([key, value]) => metricCard(
+            titleCase(key),
+            `${formatNumber(value, 2)} kg`
+          ))
+          .join("");
+
+      const g = Number(totals.g_report_green_leaf_kg);
+      const p = Number(totals.plucking_plan_actual_green_leaf_kg);
+
+      if (Number.isFinite(g) && Number.isFinite(p)) {
+        const difference = p - g;
+        const percent = g !== 0 ? (difference / g) * 100 : null;
+
+        document.getElementById("reconciliation").innerHTML = `
+          <div class="alert alert-warning">
+            <strong>Green-leaf reconciliation:</strong>
+            Plucking Plan actual exceeds G Report by
+            <strong>${formatNumber(difference, 2)} kg</strong>
+            ${percent === null ? "" : `(${formatNumber(percent, 2)}%)`}.
+            Both values remain visible pending management confirmation.
+          </div>
+        `;
+      } else {
+        document.getElementById("reconciliation").innerHTML = "";
+      }
+
+      const errors = preview.errors || [];
+      const warnings = preview.warnings || [];
+
+      document.getElementById("issues").innerHTML = `
+        ${errors.length
+          ? `<div class="alert alert-error"><strong>Errors:</strong> ${escapeHtml(errors.join(" | "))}</div>`
+          : `<div class="alert alert-success">Parser errors: none.</div>`
+        }
+        ${warnings.length
+          ? `<div class="alert alert-warning"><strong>Warnings:</strong> ${escapeHtml(warnings.join(" | "))}</div>`
+          : `<div class="alert alert-success">Parser warnings: none.</div>`
+        }
+      `;
+    }
+
+    function renderDivisions(preview) {
+      document.getElementById("gReportTable").innerHTML =
+        renderTable(preview.g_report_by_division || []);
+
+      document.getElementById("pluckingTable").innerHTML =
+        renderTable(preview.plucking_plan_by_division || []);
+
+      document.getElementById("madeTeaTable").innerHTML =
+        renderTable(preview.made_tea_crop_by_division || []);
+    }
+
+    function renderFinancial(preview) {
+      const cop = preview.cop_total;
+
+      document.getElementById("copBlock").innerHTML = cop
+        ? `
+          <div class="metric-grid">
+            ${metricCard("Description", cop.description || "-")}
+            ${metricCard("Rupees per kg", `Rs. ${formatNumber(cop.rupees_per_kg, 2)}`)}
+            ${metricCard("Cost per hectare", `Rs. ${formatNumber(cop.cost_per_hectare, 2)}`)}
+          </div>
+        `
+        : `<div class="empty">No COP total found.</div>`;
+
+      const breakEven = (preview.break_even || []).map(item => ({
+        ...item,
+        break_even_pct_display:
+          item.break_even_pct_of_budget == null
+            ? null
+            : `${formatNumber(Number(item.break_even_pct_of_budget) * 100, 2)}%`
+      }));
+
+      document.getElementById("breakEvenTable").innerHTML =
+        renderTable(breakEven);
+    }
+
+    function renderFiles(files) {
+      const rows = files.map(file => ({
+        file_name: file.name,
+        relative_path: file.relative_path,
+        extension: file.extension,
+        size_mb: file.size_mb
+      }));
+
+      document.getElementById("sourceFiles").innerHTML =
+        renderTable(rows);
+    }
+
+    async function loadTables() {
+      tables = await fetchJson("/api/monitor/tables");
+
+      const select = document.getElementById("tableSelect");
+
+      if (!tables.length) {
+        select.innerHTML = `<option value="">No production tables</option>`;
+        document.getElementById("databaseTable").innerHTML =
+          `<div class="empty">No production tables found.</div>`;
+        return;
+      }
+
+      select.innerHTML = tables.map(table => `
+        <option value="${escapeHtml(table.table_name)}">
+          ${escapeHtml(table.table_name)}
+          (${formatNumber(table.row_count)} rows)
+        </option>
+      `).join("");
+
+      await loadTable(0);
+    }
+
+    async function loadTable(offset) {
+      const table = document.getElementById("tableSelect").value;
+
+      if (!table) {
+        return;
+      }
+
+      const limit = Number(document.getElementById("pageSize").value);
+      tableOffset = Math.max(0, offset);
+
+      const payload = await fetchJson(
+        `/api/monitor/tables/${encodeURIComponent(table)}?limit=${limit}&offset=${tableOffset}`
+      );
+
+      tableTotal = payload.total_rows || 0;
+
+      document.getElementById("tableMeta").textContent =
+        `${payload.table_name}: ${formatNumber(tableTotal)} total rows`;
+
+      document.getElementById("databaseTable").innerHTML =
+        renderTable(payload.rows || []);
+
+      const page = Math.floor(tableOffset / limit) + 1;
+      const pages = Math.max(1, Math.ceil(tableTotal / limit));
+
+      document.getElementById("pageInfo").textContent =
+        `Page ${page} of ${pages}`;
+
+      document.getElementById("prevButton").disabled =
+        tableOffset <= 0;
+
+      document.getElementById("nextButton").disabled =
+        tableOffset + limit >= tableTotal;
+    }
+
+    function changePage(direction) {
+      const limit = Number(document.getElementById("pageSize").value);
+      loadTable(tableOffset + direction * limit);
+    }
+
+    async function askChat() {
+      const question = document.getElementById("chatQuestion").value.trim();
+      const answer = document.getElementById("chatAnswer");
+
+      if (!question) {
+        answer.textContent = "Enter a question first.";
+        return;
+      }
+
+      answer.textContent = "Checking approved production data...";
+
+      try {
+        const payload = await fetchJson("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8"
+          },
+          body: JSON.stringify({ question })
+        });
+
+        answer.textContent =
+          `${payload.answer}\n\nModel: ${payload.model}\nStatus: ${payload.data_status || "-"}`;
+      } catch (error) {
+        answer.textContent = error.message;
+      }
+    }
+
+    async function refreshAll() {
+      setLoading(true);
+
+      try {
+        await loadStatus();
+        await loadPreviews();
+        await loadTables();
+
+        document.getElementById("lastRefresh").textContent =
+          `Refreshed ${new Date().toLocaleString()}`;
+      } catch (error) {
+        document.getElementById("pageAlert").className =
+          "alert alert-error";
+
+        document.getElementById("pageAlert").textContent =
+          `Monitor error: ${error.message}`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(item => {
+          item.classList.remove("active");
+        });
+
+        document.querySelectorAll(".tab-panel").forEach(panel => {
+          panel.classList.remove("active");
+        });
+
+        button.classList.add("active");
+        document.getElementById(button.dataset.tab).classList.add("active");
+      });
+    });
+
+    refreshAll();
+  </script>
+</body>
+</html>

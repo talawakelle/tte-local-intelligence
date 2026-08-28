@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTE Local Intelligence Chatbot</title>
+  <style>
+    :root {
+      --green-950: #102f23;
+      --green-900: #16412f;
+      --green-800: #1f583f;
+      --green-700: #287250;
+      --green-600: #329064;
+      --green-100: #e5f3ea;
+      --green-50: #f2f9f5;
+      --amber-800: #854f00;
+      --amber-100: #fff0cb;
+      --red-700: #9e2f2f;
+      --red-100: #ffe5e5;
+      --blue-700: #245b9b;
+      --blue-100: #e5efff;
+      --ink: #17231d;
+      --muted: #63736a;
+      --line: #d8e4dc;
+      --surface: #ffffff;
+      --background: #f3f7f4;
+      --shadow: 0 12px 35px rgba(16, 47, 35, .09);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    button,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .header {
+      background:
+        radial-gradient(circle at 85% -30%, rgba(255,255,255,.18), transparent 40%),
+        linear-gradient(135deg, var(--green-950), var(--green-700));
+      color: white;
+      padding: 22px clamp(16px, 4vw, 48px);
+      box-shadow: var(--shadow);
+    }
+
+    .header-inner {
+      max-width: 1500px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.1);
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+    }
+
+    .sub {
+      margin-top: 5px;
+      color: rgba(255,255,255,.8);
+      font-size: 14px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .nav button {
+      border: 0;
+      background: white;
+      color: var(--green-950);
+      border-radius: 11px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .page {
+      max-width: 1500px;
+      margin: 24px auto 60px;
+      padding: 0 clamp(12px, 3vw, 32px);
+      display: grid;
+      grid-template-columns: minmax(250px, 330px) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 950px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 18px;
+      align-self: start;
+      position: sticky;
+      top: 16px;
+    }
+
+    @media (max-width: 950px) {
+      .sidebar {
+        position: static;
+      }
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin: 14px 0 7px;
+    }
+
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+      padding: 11px 12px;
+    }
+
+    .status {
+      margin-top: 15px;
+      border-radius: 12px;
+      padding: 13px;
+      background: var(--amber-100);
+      color: var(--amber-800);
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .status.approved {
+      background: var(--green-100);
+      color: var(--green-900);
+    }
+
+    .example-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+      max-height: 390px;
+      overflow: auto;
+    }
+
+    .example {
+      border: 1px solid var(--line);
+      background: var(--green-50);
+      color: var(--green-900);
+      border-radius: 11px;
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+
+    .example:hover {
+      border-color: var(--green-600);
+    }
+
+    .chat-card {
+      min-height: 720px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .chat-title {
+      border-bottom: 1px solid var(--line);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chat-title h2 {
+      margin: 0;
+      color: var(--green-950);
+      font-size: 19px;
+    }
+
+    .badge {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      background: var(--blue-100);
+      color: var(--blue-700);
+    }
+
+    .messages {
+      padding: 20px;
+      overflow: auto;
+      min-height: 420px;
+      max-height: 650px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background:
+        linear-gradient(rgba(255,255,255,.83), rgba(255,255,255,.83)),
+        repeating-linear-gradient(
+          45deg,
+          var(--green-50),
+          var(--green-50) 12px,
+          white 12px,
+          white 24px
+        );
+    }
+
+    .message {
+      max-width: min(900px, 92%);
+      border-radius: 17px;
+      padding: 14px 16px;
+      line-height: 1.55;
+      box-shadow: 0 5px 15px rgba(16,47,35,.06);
+      white-space: pre-wrap;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: var(--green-800);
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--line);
+      border-bottom-left-radius: 5px;
+    }
+
+    .message.error {
+      background: var(--red-100);
+      color: var(--red-700);
+      border-color: #efb9b9;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 9px;
+    }
+
+    details {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      background: var(--green-50);
+      color: var(--green-900);
+      font-weight: 800;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 380px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #edf2ee;
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--green-50);
+      color: var(--green-900);
+    }
+
+    .composer {
+      border-top: 1px solid var(--line);
+      padding: 16px;
+      background: white;
+    }
+
+    .compose-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    @media (max-width: 650px) {
+      .compose-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 82px;
+    }
+
+    .send {
+      border: 0;
+      border-radius: 12px;
+      background: var(--green-700);
+      color: white;
+      padding: 13px 20px;
+      min-height: 48px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .send:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 7px;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo">TTE</div>
+        <div>
+          <h1>Local Intelligence Chatbot</h1>
+          <div class="sub">
+            Ask questions across approved or preview estate production datasets
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <button onclick="window.open('/monitor','_blank')">Production Monitor</button>
+        <button onclick="window.open('/governance','_blank')">Data Governance</button>
+        <button onclick="window.open('/docs','_blank')">API Docs</button>
+        <button onclick="clearChat()">Clear Chat</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <aside class="card sidebar">
+      <strong>Data selection</strong>
+
+      <label class="label" for="estateSelect">Estate</label>
+      <select id="estateSelect" onchange="onEstateChange()"></select>
+
+      <label class="label" for="monthSelect">Reporting month</label>
+      <select id="monthSelect" onchange="onMonthChange()"></select>
+
+      <label class="label" for="divisionSelect">Division</label>
+      <select id="divisionSelect"></select>
+
+      <div id="dataStatus" class="status">
+        Loading production status...
+      </div>
+
+      <label class="label">Example questions</label>
+      <div id="examples" class="example-list"></div>
+    </aside>
+
+    <section class="card chat-card">
+      <div class="chat-title">
+        <h2>Ask about the dataset</h2>
+        <span id="selectionBadge" class="badge">Loading...</span>
+      </div>
+
+      <div id="messages" class="messages">
+        <div class="message assistant">
+          Select the estate, month and optional division, then ask a question.
+          The answer will be generated only from read-only production tables.
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="compose-grid">
+          <textarea id="question"
+            placeholder="Example: Compare all divisions and tell me which had the highest made-tea yield."></textarea>
+          <button id="sendButton" class="send" onclick="askQuestion()">Ask</button>
+        </div>
+        <div class="helper">
+          Press Ctrl+Enter to submit. Supporting database rows are shown under each answer.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let options = null;
+    let selectedBatch = null;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function unique(values) {
+      return [...new Set(values)];
+    }
+
+    function renderRows(rows) {
+      if (!rows || !rows.length) {
+        return `<div style="padding:14px;color:#63736a">No supporting rows.</div>`;
+      }
+
+      const columns = unique(
+        rows.flatMap(row => Object.keys(row))
+      );
+
+      return `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                ${columns.map(column => `<th>${escapeHtml(column.replaceAll("_"," "))}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  ${columns.map(column => `<td>${escapeHtml(row[column])}</td>`).join("")}
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const text = await response.text();
+
+      let data;
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { detail: text };
+      }
+
+      if (!response.ok) {
+        throw new Error(data.detail || `Request failed: ${response.status}`);
+      }
+
+      return data;
+    }
+
+    async function loadOptions() {
+      options = await fetchJson("/api/dataset-chat/options");
+
+      const batches = options.batches || [];
+      const estates = unique(batches.map(item => item.estate_name));
+
+      const estateSelect = document.getElementById("estateSelect");
+
+      estateSelect.innerHTML = estates.map(estate => `
+        <option value="${escapeHtml(estate)}">${escapeHtml(estate)}</option>
+      `).join("");
+
+      document.getElementById("examples").innerHTML =
+        (options.question_examples || []).map(question => `
+          <button class="example" onclick='useExample(${JSON.stringify(question)})'>
+            ${escapeHtml(question)}
+          </button>
+        `).join("");
+
+      onEstateChange();
+    }
+
+    function onEstateChange() {
+      const estate = document.getElementById("estateSelect").value;
+      const batches = (options.batches || [])
+        .filter(item => item.estate_name === estate);
+
+      const monthSelect = document.getElementById("monthSelect");
+
+      monthSelect.innerHTML = batches.map(item => `
+        <option value="${escapeHtml(item.reporting_month)}">
+          ${escapeHtml(item.reporting_month)}
+        </option>
+      `).join("");
+
+      onMonthChange();
+    }
+
+    function onMonthChange() {
+      const estate = document.getElementById("estateSelect").value;
+      const month = document.getElementById("monthSelect").value;
+
+      selectedBatch = (options.batches || []).find(
+        item =>
+          item.estate_name === estate
+          && item.reporting_month === month
+      );
+
+      const divisionSelect = document.getElementById("divisionSelect");
+      const divisions = selectedBatch?.divisions || [];
+
+      divisionSelect.innerHTML = `
+        <option value="">All divisions</option>
+        ${divisions.map(division => `
+          <option value="${escapeHtml(division)}">${escapeHtml(division)}</option>
+        `).join("")}
+      `;
+
+      const status = document.getElementById("dataStatus");
+      const dataMode = selectedBatch?.data_mode || "UNKNOWN";
+
+      status.className =
+        dataMode === "APPROVED"
+          ? "status approved"
+          : "status";
+
+      status.textContent =
+        dataMode === "APPROVED"
+          ? `APPROVED METRICS - ${selectedBatch.analytics_status}`
+          : `PREVIEW DATA - ${selectedBatch?.analytics_status || "Unknown status"}. Figures are visible for review but are not final approved metrics.`;
+
+      document.getElementById("selectionBadge").textContent =
+        `${estate || "-"} | ${month || "-"} | ${dataMode}`;
+    }
+
+    function useExample(question) {
+      document.getElementById("question").value = question;
+      document.getElementById("question").focus();
+    }
+
+    function addMessage(type, content, payload = null) {
+      const messages = document.getElementById("messages");
+      const node = document.createElement("div");
+
+      node.className = `message ${type}`;
+
+      if (type === "assistant" && payload) {
+        node.innerHTML = `
+          <div>${escapeHtml(content)}</div>
+          <div class="meta">
+            Estate: ${escapeHtml(payload.estate_name)}
+            | Month: ${escapeHtml(payload.reporting_month)}
+            | Division: ${escapeHtml(payload.division_name || "All")}
+            | Mode: ${escapeHtml(payload.data_mode)}
+            | Status: ${escapeHtml(payload.data_status)}
+            | Sources: ${escapeHtml((payload.source_tables || []).join(", "))}
+          </div>
+          <details>
+            <summary>
+              Supporting Data (${escapeHtml(payload.supporting_row_count)} displayed rows)
+            </summary>
+            ${renderRows(payload.supporting_rows || [])}
+          </details>
+        `;
+      } else {
+        node.textContent = content;
+      }
+
+      messages.appendChild(node);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function askQuestion() {
+      const questionBox = document.getElementById("question");
+      const question = questionBox.value.trim();
+
+      if (!question) {
+        return;
+      }
+
+      if (!selectedBatch) {
+        addMessage("error", "No parsed estate-month dataset is available.");
+        return;
+      }
+
+      const division =
+        document.getElementById("divisionSelect").value || null;
+
+      addMessage("user", question);
+      questionBox.value = "";
+
+      const button = document.getElementById("sendButton");
+      button.disabled = true;
+      button.textContent = "Checking...";
+
+      try {
+        const payload = await fetchJson("/api/dataset-chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8"
+          },
+          body: JSON.stringify({
+            question,
+            estate_name: selectedBatch.estate_name,
+            reporting_month: selectedBatch.reporting_month,
+            division_name: division
+          })
+        });
+
+        addMessage("assistant", payload.answer, payload);
+      } catch (error) {
+        addMessage("error", error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = "Ask";
+        questionBox.focus();
+      }
+    }
+
+    function clearChat() {
+      document.getElementById("messages").innerHTML = `
+        <div class="message assistant">
+          Chat cleared. Ask another question about the selected dataset.
+        </div>
+      `;
+    }
+
+    document.getElementById("question").addEventListener(
+      "keydown",
+      event => {
+        if (event.ctrlKey && event.key === "Enter") {
+          askQuestion();
+        }
+      }
+    );
+
+    loadOptions().catch(error => {
+      addMessage("error", error.message);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTE Data Governance</title>
+  <style>
+    :root {
+      --green-950:#102f23; --green-700:#27734f;
+      --green-100:#e5f3ea; --green-50:#f3f9f5;
+      --amber-800:#824d00; --amber-100:#fff0ca;
+      --red-800:#8f2626; --red-100:#ffe3e3;
+      --ink:#17231d; --muted:#64736a; --line:#d7e4db;
+      --surface:#fff; --background:#f3f7f4;
+      --shadow:0 12px 32px rgba(16,47,35,.09);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; background:var(--background); color:var(--ink);
+      font-family:Inter,"Segoe UI",Arial,sans-serif;
+    }
+    header {
+      background:linear-gradient(135deg,var(--green-950),var(--green-700));
+      color:white; padding:22px clamp(16px,4vw,48px);
+    }
+    .header-inner {
+      max-width:1400px; margin:auto; display:flex;
+      justify-content:space-between; align-items:center;
+      gap:15px; flex-wrap:wrap;
+    }
+    h1 { margin:0; }
+    .nav { display:flex; gap:9px; }
+    button {
+      border:0; border-radius:10px; padding:10px 13px;
+      font-weight:800; cursor:pointer;
+    }
+    .nav button { background:white; color:var(--green-950); }
+    main {
+      max-width:1400px; margin:24px auto 60px;
+      padding:0 clamp(12px,3vw,30px);
+    }
+    .summary {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+      gap:13px; margin-bottom:18px;
+    }
+    .card {
+      background:var(--surface); border:1px solid var(--line);
+      border-radius:16px; box-shadow:var(--shadow);
+    }
+    .summary-card { padding:17px; }
+    .label {
+      color:var(--muted); font-size:12px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.06em;
+    }
+    .value {
+      margin-top:7px; font-size:27px; font-weight:900;
+      color:var(--green-950);
+    }
+    .issue { margin-bottom:16px; overflow:hidden; }
+    .issue-head {
+      padding:16px 18px; display:flex; justify-content:space-between;
+      gap:12px; align-items:center; border-bottom:1px solid var(--line);
+      flex-wrap:wrap;
+    }
+    .issue-body { padding:18px; }
+    .badge {
+      border-radius:999px; padding:6px 10px;
+      font-size:12px; font-weight:900;
+    }
+    .high { background:var(--red-100); color:var(--red-800); }
+    .medium { background:var(--amber-100); color:var(--amber-800); }
+    .resolved { background:var(--green-100); color:var(--green-950); }
+    .message {
+      padding:14px; border-radius:11px; background:var(--amber-100);
+      color:var(--amber-800); font-weight:700; line-height:1.5;
+    }
+    .metrics {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:10px; margin-top:14px;
+    }
+    .metric {
+      background:var(--green-50); border:1px solid var(--line);
+      border-radius:11px; padding:12px;
+    }
+    .approval {
+      margin-top:16px; border-top:1px solid var(--line);
+      padding-top:16px; display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;
+    }
+    @media (max-width:750px) {
+      .approval { grid-template-columns:1fr; }
+    }
+    select,input,textarea {
+      width:100%; border:1px solid var(--line);
+      border-radius:10px; padding:10px 11px; font:inherit;
+    }
+    textarea { min-height:80px; resize:vertical; }
+    .full { grid-column:1/-1; }
+    .approve { background:var(--green-700); color:white; }
+    .empty {
+      text-align:center; padding:40px 15px; color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>TTE Data Governance</h1>
+      <div>Management issues, reconciliation and official metric approval</div>
+    </div>
+    <div class="nav">
+      <button onclick="window.open('/chat','_blank')">Chatbot</button>
+      <button onclick="window.open('/monitor','_blank')">Monitor</button>
+      <button onclick="loadIssues()">Refresh</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="summary">
+    <div class="card summary-card"><div class="label">Open issues</div><div id="openCount" class="value">0</div></div>
+    <div class="card summary-card"><div class="label">High severity</div><div id="highCount" class="value">0</div></div>
+    <div class="card summary-card"><div class="label">Resolved</div><div id="resolvedCount" class="value">0</div></div>
+    <div class="card summary-card"><div class="label">Official approvals</div><div id="approvalCount" class="value">0</div></div>
+  </section>
+  <div id="issues"></div>
+</main>
+
+<script>
+function esc(value) {
+  return String(value ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function num(value, decimals=2) {
+  const parsed=Number(value);
+  if (!Number.isFinite(parsed)) return "-";
+  return parsed.toLocaleString(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+}
+async function getJson(url, options={}) {
+  const response=await fetch(url,options);
+  const text=await response.text();
+  let data;
+  try { data=text?JSON.parse(text):{}; }
+  catch { data={detail:text}; }
+  if (!response.ok) throw new Error(data.detail||`Request failed: ${response.status}`);
+  return data;
+}
+async function resolveIssue(id) {
+  const source=document.getElementById(`source-${id}`).value;
+  const manager=document.getElementById(`manager-${id}`).value.trim();
+  const note=document.getElementById(`note-${id}`).value.trim();
+  const manual=document.getElementById(`manual-${id}`).value;
+  const confirm=document.getElementById(`confirm-${id}`).value.trim();
+  try {
+    const result=await getJson(`/api/data-governance/issues/${encodeURIComponent(id)}/resolve`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json; charset=utf-8"},
+      body:JSON.stringify({
+        official_source:source,
+        approved_by:manager,
+        approval_note:note,
+        confirm_text:confirm,
+        manual_value:source==="MANUAL"?Number(manual):null
+      })
+    });
+    alert(`Official metric approved: ${num(result.official_value,2)} kg`);
+    await loadIssues();
+  } catch(error) { alert(error.message); }
+}
+function issueHtml(issue) {
+  const cls=issue.status==="RESOLVED"?"resolved":issue.severity==="HIGH"?"high":"medium";
+  let action="";
+  if (issue.status==="OPEN" && issue.issue_type==="SOURCE_RECONCILIATION") {
+    action=`
+      <div class="approval">
+        <div><div class="label">Official source</div><select id="source-${esc(issue.issue_id)}"><option value="">Select source</option><option value="G_REPORT">G Report</option><option value="PLUCKING_PLAN">Plucking Plan</option><option value="MANUAL">Manual approved value</option></select></div>
+        <div><div class="label">Manual value, only when selected</div><input id="manual-${esc(issue.issue_id)}" type="number" step="0.01"></div>
+        <div><div class="label">Approved by</div><input id="manager-${esc(issue.issue_id)}" placeholder="Manager name"></div>
+        <div><div class="label">Confirmation text</div><input id="confirm-${esc(issue.issue_id)}" placeholder="APPROVE OFFICIAL METRIC"></div>
+        <div class="full"><div class="label">Approval and reconciliation note</div><textarea id="note-${esc(issue.issue_id)}" placeholder="Explain why this source/value is approved."></textarea></div>
+        <div class="full"><button class="approve" onclick="resolveIssue('${esc(issue.issue_id)}')">Approve Official Metric</button></div>
+      </div>`;
+  } else if (issue.status==="RESOLVED") {
+    action=`<div class="message" style="background:#e5f3ea;color:#102f23">Official value: ${num(issue.official_value,2)} kg | Source: ${esc(issue.official_source)} | Approved by: ${esc(issue.resolved_by)} | Note: ${esc(issue.resolution_note)}</div>`;
+  }
+  return `
+    <section class="card issue">
+      <div class="issue-head"><strong>${esc(issue.estate_name)} | ${esc(issue.reporting_month)} | ${esc(issue.issue_type)}</strong><span class="badge ${cls}">${esc(issue.status)} - ${esc(issue.severity)}</span></div>
+      <div class="issue-body">
+        <div class="message">${esc(issue.manager_message)}</div>
+        <div class="metrics">
+          <div class="metric"><div class="label">${esc(issue.source_a_name||"Source A")}</div><strong>${num(issue.source_a_value,2)}</strong></div>
+          <div class="metric"><div class="label">${esc(issue.source_b_name||"Source B")}</div><strong>${num(issue.source_b_value,2)}</strong></div>
+          <div class="metric"><div class="label">Difference</div><strong>${num(issue.difference_value,2)}</strong></div>
+          <div class="metric"><div class="label">Difference %</div><strong>${num(issue.difference_pct,2)}%</strong></div>
+        </div>
+        ${action}
+      </div>
+    </section>`;
+}
+async function loadIssues() {
+  const [issues,status]=await Promise.all([getJson("/api/data-governance/issues"),getJson("/api/data-governance/status")]);
+  document.getElementById("openCount").textContent=issues.filter(x=>x.status==="OPEN").length;
+  document.getElementById("highCount").textContent=issues.filter(x=>x.status==="OPEN"&&x.severity==="HIGH").length;
+  document.getElementById("resolvedCount").textContent=issues.filter(x=>x.status==="RESOLVED").length;
+  document.getElementById("approvalCount").textContent=status.metric_approval_count||0;
+  document.getElementById("issues").innerHTML=issues.length?issues.map(issueHtml).join(""):'<div class="card empty">No governance issues were found.</div>';
+}
+loadIssues().catch(error=>{document.getElementById("issues").innerHTML=`<div class="card empty">${esc(error.message)}</div>`;});
+</script>
+</body>
+</html>

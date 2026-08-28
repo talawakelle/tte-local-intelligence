@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TTE Advanced Intelligence Assistant</title>
+<style>
+:root{
+  --g950:#102f23;--g850:#184732;--g700:#28734f;--g100:#e5f3ea;
+  --g50:#f3faf6;--amber:#fff0c9;--amberText:#805000;
+  --red:#ffe2e2;--redText:#922b2b;--ink:#17231d;--muted:#617168;
+  --line:#d8e4dc;--surface:#fff;--bg:#f3f7f4;
+  --shadow:0 12px 34px rgba(16,47,35,.09)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif}
+button,select,textarea{font:inherit}
+header{background:linear-gradient(135deg,var(--g950),var(--g700));color:white;padding:22px clamp(16px,4vw,48px)}
+.header{max-width:1500px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(22px,3vw,34px)}
+.sub{margin-top:5px;color:rgba(255,255,255,.8)}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.nav button{border:0;border-radius:10px;background:white;color:var(--g950);padding:10px 13px;font-weight:800;cursor:pointer}
+.page{max-width:1500px;margin:22px auto 55px;padding:0 clamp(12px,3vw,30px);display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
+@media(max-width:950px){.page{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow)}
+.sidebar{padding:18px;align-self:start;position:sticky;top:14px}
+@media(max-width:950px){.sidebar{position:static}}
+.label{display:block;margin:13px 0 6px;color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:white}
+.status{margin-top:14px;padding:12px;border-radius:10px;background:var(--amber);color:var(--amberText);font-weight:700;line-height:1.45}
+.examples{display:grid;gap:7px;max-height:330px;overflow:auto}
+.example{border:1px solid var(--line);border-radius:10px;background:var(--g50);color:var(--g850);padding:9px;text-align:left;cursor:pointer}
+.chat{min-height:760px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+.chatHead{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.badge{border-radius:999px;background:var(--g100);color:var(--g950);padding:6px 10px;font-size:12px;font-weight:900}
+.messages{padding:18px;overflow:auto;max-height:650px;min-height:450px;display:flex;flex-direction:column;gap:14px;background:linear-gradient(rgba(255,255,255,.85),rgba(255,255,255,.85)),repeating-linear-gradient(45deg,var(--g50),var(--g50) 12px,#fff 12px,#fff 24px)}
+.message{max-width:min(920px,94%);padding:14px 16px;border-radius:16px;white-space:pre-wrap;line-height:1.55;box-shadow:0 5px 14px rgba(16,47,35,.06)}
+.user{align-self:flex-end;background:var(--g850);color:white;border-bottom-right-radius:5px}
+.assistant{align-self:flex-start;background:white;border:1px solid var(--line);border-bottom-left-radius:5px}
+.error{background:var(--red);color:var(--redText)}
+.warning{margin-top:10px;padding:10px;border-radius:9px;background:var(--amber);color:var(--amberText);font-size:13px}
+.meta{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+details{margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+summary{padding:9px 11px;background:var(--g50);cursor:pointer;font-weight:800;color:var(--g850)}
+.tableWrap{overflow:auto;max-height:350px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:8px 9px;border-bottom:1px solid #edf2ee;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--g50);color:var(--g850)}
+.chart{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:11px;background:white}
+.chartTitle{font-weight:900;color:var(--g950);margin-bottom:8px}
+svg{width:100%;height:280px;display:block}
+.composer{padding:15px;border-top:1px solid var(--line)}
+.compose{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+@media(max-width:650px){.compose{grid-template-columns:1fr}}
+textarea{min-height:82px;resize:vertical}
+.send{border:0;border-radius:11px;background:var(--g700);color:white;padding:13px 20px;font-weight:900;cursor:pointer}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.action{border:1px solid var(--line);border-radius:9px;background:white;color:var(--g850);padding:7px 10px;cursor:pointer;font-size:12px;font-weight:800}
+</style>
+</head>
+<body>
+<header>
+  <div class="header">
+    <div><h1>TTE Advanced Intelligence Assistant</h1><div class="sub">Management alerts, safe analytics, evidence, charts and role-aware access</div></div>
+    <div class="nav">
+      <button onclick="window.open('/governance-v2','_blank')">Governance</button>
+      <button onclick="window.open('/monitor','_blank')">Monitor</button>
+      <button onclick="window.open('/chat','_blank')">Original Chat</button>
+      <button onclick="clearChat()">Clear</button>
+    </div>
+  </div>
+</header>
+<main class="page">
+<aside class="card sidebar">
+  <strong>Data and access</strong>
+  <label class="label">Role</label><select id="role"></select>
+  <label class="label">Estate</label><select id="estate" onchange="estateChanged()"></select>
+  <label class="label">Reporting month</label><select id="month" onchange="monthChanged()"></select>
+  <label class="label">Division</label><select id="division"></select>
+  <div id="status" class="status">Loading...</div>
+  <label class="label">Example questions</label>
+  <div id="examples" class="examples"></div>
+</aside>
+<section class="card chat">
+  <div class="chatHead"><strong>Ask about production data</strong><span id="badge" class="badge">Loading</span></div>
+  <div id="messages" class="messages">
+    <div class="message assistant">Select the estate, month, division and role, then ask a question. Answers use allowlisted read-only queries and show supporting evidence.</div>
+  </div>
+  <div class="composer">
+    <div class="compose">
+      <textarea id="question" placeholder="Example: Show all management problems and compare divisions."></textarea>
+      <button id="send" class="send" onclick="ask()">Ask</button>
+    </div>
+    <div class="actions">
+      <button class="action" onclick="downloadLastCsv()">Download last evidence CSV</button>
+      <button class="action" onclick="window.open('/governance-v2','_blank')">Resolve management issues</button>
+    </div>
+  </div>
+</section>
+</main>
+<script>
+let options=null,currentBatch=null,history=[],previousIntent=null,lastRows=[];
+function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function unique(a){return[...new Set(a)]}
+async function getJson(url,opts={}){const r=await fetch(url,opts);const t=await r.text();let d;try{d=t?JSON.parse(t):{}}catch{d={detail:t}}if(!r.ok)throw new Error(d.detail||`Request failed: ${r.status}`);return d}
+function table(rows){if(!rows?.length)return'<div style="padding:12px;color:#617168">No evidence rows.</div>';const cols=unique(rows.flatMap(r=>Object.keys(r)));return`<div class="tableWrap"><table><thead><tr>${cols.map(c=>`<th>${esc(c.replaceAll("_"," "))}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
+function chartSvg(chart){
+  if(!chart)return"";
+  const labels=chart.labels||[];
+  const series=chart.series||[{name:"Value",values:chart.values||[]}];
+  const all=series.flatMap(s=>s.values||[]).map(Number).filter(Number.isFinite);
+  if(!all.length)return"";
+  const max=Math.max(...all,1),w=900,h=260,p=45;
+  if(chart.type==="line"){
+    const vals=series[0].values.map(Number);
+    const points=vals.map((v,i)=>`${p+(i*(w-2*p)/Math.max(1,vals.length-1))},${h-p-(v/max)*(h-2*p)}`).join(" ");
+    return`<div class="chart"><div class="chartTitle">${esc(chart.title||"Chart")}</div><svg viewBox="0 0 ${w} ${h}"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#617168"/><line x1="${p}" y1="${p}" x2="${p}" y2="${h-p}" stroke="#617168"/><polyline points="${points}" fill="none" stroke="#28734f" stroke-width="4"/>${vals.map((v,i)=>{const x=p+(i*(w-2*p)/Math.max(1,vals.length-1)),y=h-p-(v/max)*(h-2*p);return`<circle cx="${x}" cy="${y}" r="5" fill="#28734f"/><text x="${x}" y="${h-15}" text-anchor="middle" font-size="12">${esc(labels[i])}</text>`}).join("")}</svg></div>`
+  }
+  const group=series.length,bw=(w-2*p)/Math.max(1,labels.length),barW=Math.max(8,(bw*0.72)/group);
+  return`<div class="chart"><div class="chartTitle">${esc(chart.title||"Chart")}</div><svg viewBox="0 0 ${w} ${h}"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#617168"/><line x1="${p}" y1="${p}" x2="${p}" y2="${h-p}" stroke="#617168"/>${labels.map((lab,i)=>series.map((s,j)=>{const v=Number(s.values[i])||0,x=p+i*bw+bw*.14+j*barW,y=h-p-(v/max)*(h-2*p),height=h-p-y;return`<rect x="${x}" y="${y}" width="${barW-2}" height="${height}" rx="3" fill="${j%2===0?'#28734f':'#7aa68c'}"/><text x="${p+i*bw+bw/2}" y="${h-15}" text-anchor="middle" font-size="11">${esc(lab)}</text>`}).join("")).join("")}</svg></div>`
+}
+function add(type,text,payload=null){const m=document.getElementById("messages"),d=document.createElement("div");d.className=`message ${type}`;if(payload){lastRows=payload.supporting_rows||[];const warns=(payload.warnings||[]).length?`<div class="warning">${payload.warnings.map(esc).join("<br>")}</div>`:"";const suggestions=(payload.follow_up_suggestions||[]).map(q=>`<button class="action" onclick='useExample(${JSON.stringify(q)})'>${esc(q)}</button>`).join("");d.innerHTML=`<div>${esc(text)}</div>${warns}${chartSvg(payload.chart)}<div class="meta">Estate: ${esc(payload.estate_name)} | Month: ${esc(payload.reporting_month)} | Division: ${esc(payload.division_name||"All")} | Role: ${esc(payload.role)} | Intent: ${esc(payload.intent)} | Sources: ${esc((payload.source_tables||[]).join(", "))}</div><details><summary>Supporting evidence (${payload.supporting_rows?.length||0} rows)</summary>${table(payload.supporting_rows||[])}</details><div class="actions">${suggestions}</div>`}else d.textContent=text;m.appendChild(d);m.scrollTop=m.scrollHeight}
+async function load(){options=await getJson("/api/assistant/options");document.getElementById("role").innerHTML=(options.roles||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("");document.getElementById("role").value="management";document.getElementById("estate").innerHTML=unique((options.batches||[]).map(b=>b.estate_name)).map(e=>`<option>${esc(e)}</option>`).join("");document.getElementById("examples").innerHTML=(options.examples||[]).map(q=>`<button class="example" onclick='useExample(${JSON.stringify(q)})'>${esc(q)}</button>`).join("");estateChanged()}
+function estateChanged(){const e=document.getElementById("estate").value,bs=(options.batches||[]).filter(b=>b.estate_name===e);document.getElementById("month").innerHTML=bs.map(b=>`<option>${esc(b.reporting_month)}</option>`).join("");monthChanged()}
+function monthChanged(){const e=document.getElementById("estate").value,m=document.getElementById("month").value;currentBatch=(options.batches||[]).find(b=>b.estate_name===e&&b.reporting_month===m);document.getElementById("division").innerHTML=`<option value="">All divisions</option>${(currentBatch?.divisions||[]).map(d=>`<option>${esc(d)}</option>`).join("")}`;const mode=currentBatch?.data_mode||"UNKNOWN";document.getElementById("status").textContent=mode==="APPROVED"?`APPROVED - ${currentBatch.analytics_status}`:`PREVIEW - ${currentBatch?.analytics_status}. Figures are not final approved metrics.`;document.getElementById("badge").textContent=`${e} | ${m} | ${mode}`}
+function useExample(q){document.getElementById("question").value=q;document.getElementById("question").focus()}
+async function ask(){const q=document.getElementById("question").value.trim();if(!q||!currentBatch)return;add("user",q);document.getElementById("question").value="";const b=document.getElementById("send");b.disabled=true;b.textContent="Checking...";try{const p=await getJson("/api/assistant",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,estate_name:currentBatch.estate_name,reporting_month:currentBatch.reporting_month,division_name:document.getElementById("division").value||null,role:document.getElementById("role").value,history:history.slice(-10),previous_intent:previousIntent})});previousIntent=p.intent;history.push({role:"user",content:q},{role:"assistant",content:p.answer});localStorage.setItem("tteAdvancedHistory",JSON.stringify(history.slice(-10)));add("assistant",p.answer,p)}catch(e){add("error",e.message)}finally{b.disabled=false;b.textContent="Ask"}}
+function clearChat(){history=[];previousIntent=null;lastRows=[];localStorage.removeItem("tteAdvancedHistory");document.getElementById("messages").innerHTML='<div class="message assistant">Chat cleared.</div>'}
+function downloadLastCsv(){if(!lastRows.length){alert("No evidence rows available.");return}const cols=unique(lastRows.flatMap(r=>Object.keys(r))),csv=[cols.join(","),...lastRows.map(r=>cols.map(c=>`"${String(r[c]??"").replaceAll('"','""')}"`).join(","))].join("\r\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tte_chat_evidence.csv";a.click();URL.revokeObjectURL(a.href)}
+document.getElementById("question").addEventListener("keydown",e=>{if(e.ctrlKey&&e.key==="Enter")ask()});
+try{history=JSON.parse(localStorage.getItem("tteAdvancedHistory")||"[]")}catch{history=[]}
+load().catch(e=>add("error",e.message));
+</script>
+</body>
+</html>
